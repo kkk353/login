@@ -4,25 +4,172 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>登录表单</title>
+  <title>随机音频播放</title>
 </head>
 
 <body>
-  <form action="">
-    <ul>
-      <li>
-        <label for="username">用户名：</label>
-        <input type="text" placeholder="请输入用户名" id="username" name="username" accesskey="s" autocomplete="off" required>
-      </li>
-      <li>
-        <label for="password">密码：</label>
-        <input type="password" placeholder="请输入密码" id="password" name="password" maxlength="6" minlength="5" required>
-      </li>
-      <li>
-        <input type="submit" value="登录">
-      </li>
-    </ul>
-  </form>
+
+  <audio id="audioPlayer" controls autoplay></audio>
+
+  <!-- 文件名显示区域 -->
+  <div style="margin: 10px 0;">
+    <h3>当前播放：</h3>
+    <p id="currentFileName" style="font-size: 18px; color: #333; font-weight: bold;">加载中...</p>
+  </div>
+
+  <!-- 播放控制按钮 -->
+  <div style="margin: 10px 0;">
+    <button id="nextButton"
+      style="padding: 8px 16px; font-size: 16px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+      播放下一首
+    </button>
+  </div>
+
+  <!-- 音乐列表区域 -->
+  <div style="margin: 20px 0;">
+    <h3>音乐列表</h3>
+    <div id="musicList" style="background-color: #f5f5f5; padding: 10px; border-radius: 5px; max-width: 400px;">
+      <!-- 音乐列表将通过JavaScript动态生成 -->
+    </div>
+  </div>
+
+  <!-- <video src="media/yu7.mp4" controls width="300" autoplay loop poster="media/yu7.jpg"></video> -->
+
+  <script>
+    // 音频播放列表
+    const audioPlaylist = [
+      "media/春雨里洗过的太阳.mp3",
+      "media/樱花草.mp3",
+      "media/不是因为寂寞才想你.mp3",
+      "music/苦的甜.mp3",
+      "music/浪漫科学你.mp3",
+      "music/沒關係，不在意.mp3",
+      "music/巧遇我的脆弱.mp3",
+      "music/無大志.mp3",
+      "music/不是你想像的那種好人.mp3"
+    ];
+
+    // 获取音频元素
+    const audioPlayer = document.getElementById("audioPlayer");
+    // 获取文件名显示元素
+    const currentFileNameElement = document.getElementById("currentFileName");
+    // 获取下一首按钮
+    const nextButton = document.getElementById("nextButton");
+    // 获取音乐列表容器
+    const musicListElement = document.getElementById("musicList");
+
+    // 从路径中提取文件名
+    function getFileNameFromPath(path) {
+      const parts = path.split("/");
+      return parts[parts.length - 1].replace(".mp3", "");
+    }
+
+    // 随机选择音频文件
+    function getRandomAudio() {
+      const randomIndex = Math.floor(Math.random() * audioPlaylist.length);
+      return audioPlaylist[randomIndex];
+    }
+
+    // 更新当前播放歌曲的视觉指示
+    function updateCurrentPlayingIndicator(audioPath) {
+      // 移除所有歌曲的当前播放样式
+      const allSongs = document.querySelectorAll(".music-item");
+      allSongs.forEach(song => {
+        song.classList.remove("playing");
+      });
+
+      // 为当前播放的歌曲添加样式
+      const currentSong = document.querySelector(`[data-path="${audioPath}"]`);
+      if (currentSong) {
+        currentSong.classList.add("playing");
+      }
+    }
+
+    // 设置并播放指定音频
+    function playAudio(audioPath) {
+      audioPlayer.src = audioPath;
+      // 显示当前播放的文件名
+      const fileName = getFileNameFromPath(audioPath);
+      currentFileNameElement.textContent = fileName;
+      // 更新当前播放指示
+      updateCurrentPlayingIndicator(audioPath);
+      audioPlayer.play().catch(error => {
+        console.log("自动播放被阻止，等待用户交互:", error);
+      });
+    }
+
+    // 设置并播放随机音频
+    function playRandomAudio() {
+      const randomAudio = getRandomAudio();
+      playAudio(randomAudio);
+    }
+
+    // 动态生成音乐列表
+    function generateMusicList() {
+      musicListElement.innerHTML = "";
+
+      audioPlaylist.forEach(audioPath => {
+        const fileName = getFileNameFromPath(audioPath);
+        const listItem = document.createElement("div");
+
+        // 设置列表项样式
+        listItem.style.cssText = `
+          padding: 8px 12px;
+          margin: 5px 0;
+          background-color: #fff;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: background-color 0.2s;
+        `;
+
+        // 添加类名和数据属性
+        listItem.className = "music-item";
+        listItem.dataset.path = audioPath;
+        listItem.textContent = fileName;
+
+        // 添加点击事件
+        listItem.addEventListener("click", () => {
+          playAudio(audioPath);
+        });
+
+        // 添加到列表容器
+        musicListElement.appendChild(listItem);
+      });
+    }
+
+    // 当一个音频播放结束时，播放下一个随机音频
+    audioPlayer.addEventListener("ended", playRandomAudio);
+
+    // 页面加载时初始化
+    document.addEventListener("DOMContentLoaded", () => {
+      generateMusicList();
+      playRandomAudio();
+    });
+
+    // 音频默认不静音，移除点击启用音频的事件监听器
+
+    // 下一首按钮点击事件
+    nextButton.addEventListener("click", playRandomAudio);
+
+    // 添加当前播放样式
+    const style = document.createElement("style");
+    style.textContent = `
+      .music-item.playing {
+        background-color: #4CAF50 !important;
+        color: white;
+        font-weight: bold;
+      }
+      
+      .music-item:hover {
+        background-color: #e0e0e0 !important;
+      }
+      
+      .music-item.playing:hover {
+        background-color: #45a049 !important;
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
 </body>
 
 </html>
