@@ -25,6 +25,14 @@
     </button>
   </div>
 
+  <!-- 音量控制区域 -->
+  <div style="margin: 10px 0;">
+    <h3>音量控制</h3>
+    <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="1"
+      style="width: 200px; margin-right: 10px;">
+    <span id="volumeValue">100%</span>
+  </div>
+
   <!-- 音乐列表区域 -->
   <div style="margin: 20px 0;">
     <h3>音乐列表</h3>
@@ -59,6 +67,10 @@
     const nextButton = document.getElementById("nextButton");
     // 获取音乐列表容器
     const musicListElement = document.getElementById("musicList");
+    // 获取音量控制元素
+    const volumeControl = document.getElementById("volumeControl");
+    // 获取音量值显示元素
+    const volumeValueElement = document.getElementById("volumeValue");
 
     // 从路径中提取文件名
     function getFileNameFromPath(path) {
@@ -152,6 +164,15 @@
 
     // 下一首按钮点击事件
     nextButton.addEventListener("click", playRandomAudio);
+
+    // 音量控制事件
+    volumeControl.addEventListener("input", function () {
+      const volume = parseFloat(this.value);
+      audioPlayer.volume = volume;
+      // 更新音量显示
+      const volumePercentage = Math.round(volume * 100);
+      volumeValueElement.textContent = volumePercentage + "%";
+    });
 
     // 添加当前播放样式
     const style = document.createElement("style");
