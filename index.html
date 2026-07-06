@@ -33,6 +33,14 @@
     <span id="volumeValue">100%</span>
   </div>
 
+  <!-- 播放模式控制区域 -->
+  <div style="margin: 10px 0;">
+    <h3>播放模式</h3>
+    <button id="loopButton" class="mode-btn" data-mode="loop">单曲循环</button>
+    <button id="orderButton" class="mode-btn active" data-mode="order">顺序播放</button>
+    <button id="randomButton" class="mode-btn" data-mode="random">随机播放</button>
+  </div>
+
   <!-- 音乐列表区域 -->
   <div style="margin: 20px 0;">
     <h3>音乐列表</h3>
@@ -72,6 +80,15 @@
     const volumeControl = document.getElementById("volumeControl");
     // 获取音量值显示元素
     const volumeValueElement = document.getElementById("volumeValue");
+    // 获取播放模式按钮
+    const loopButton = document.getElementById("loopButton");
+    const orderButton = document.getElementById("orderButton");
+    const randomButton = document.getElementById("randomButton");
+
+    // 当前播放模式：loop(单曲循环), order(顺序播放), random(随机播放)
+    let currentMode = "order";
+    // 当前播放索引（用于顺序播放）
+    let currentIndex = 0;
 
     // 从路径中提取文件名
     function getFileNameFromPath(path) {
@@ -103,11 +120,10 @@
     // 设置并播放指定音频
     function playAudio(audioPath) {
       audioPlayer.src = audioPath;
-      // 显示当前播放的文件名
       const fileName = getFileNameFromPath(audioPath);
       currentFileNameElement.textContent = fileName;
-      // 更新当前播放指示
       updateCurrentPlayingIndicator(audioPath);
+      currentIndex = audioPlaylist.indexOf(audioPath);
       audioPlayer.play().catch(error => {
         console.log("自动播放被阻止，等待用户交互:", error);
       });
@@ -117,6 +133,25 @@
     function playRandomAudio() {
       const randomAudio = getRandomAudio();
       playAudio(randomAudio);
+    }
+
+    // 播放下一首（根据当前模式）
+    function playNext() {
+      switch (currentMode) {
+        case "loop":
+          audioPlayer.currentTime = 0;
+          audioPlayer.play().catch(error => {
+            console.log("自动播放被阻止，等待用户交互:", error);
+          });
+          break;
+        case "order":
+          currentIndex = (currentIndex + 1) % audioPlaylist.length;
+          playAudio(audioPlaylist[currentIndex]);
+          break;
+        case "random":
+          playRandomAudio();
+          break;
+      }
     }
 
     // 动态生成音乐列表
@@ -152,19 +187,19 @@
       });
     }
 
-    // 当一个音频播放结束时，播放下一个随机音频
-    audioPlayer.addEventListener("ended", playRandomAudio);
+    // 当一个音频播放结束时，根据模式播放下一首
+    audioPlayer.addEventListener("ended", playNext);
 
     // 页面加载时初始化
     document.addEventListener("DOMContentLoaded", () => {
       generateMusicList();
-      playRandomAudio();
+      playAudio(audioPlaylist[0]);
     });
 
     // 音频默认不静音，移除点击启用音频的事件监听器
 
     // 下一首按钮点击事件
-    nextButton.addEventListener("click", playRandomAudio);
+    nextButton.addEventListener("click", playNext);
 
     // 音量控制事件
     volumeControl.addEventListener("input", function () {
@@ -174,6 +209,35 @@
       const volumePercentage = Math.round(volume * 100);
       volumeValueElement.textContent = volumePercentage + "%";
     });
+
+    // 切换播放模式
+    function setPlayMode(mode) {
+      currentMode = mode;
+      // 移除所有按钮的激活状态
+      loopButton.classList.remove("active");
+      orderButton.classList.remove("active");
+      randomButton.classList.remove("active");
+      // 添加当前模式按钮的激活状态
+      switch (mode) {
+        case "loop":
+          loopButton.classList.add("active");
+          audioPlayer.loop = true;
+          break;
+        case "order":
+          orderButton.classList.add("active");
+          audioPlayer.loop = false;
+          break;
+        case "random":
+          randomButton.classList.add("active");
+          audioPlayer.loop = false;
+          break;
+      }
+    }
+
+    // 播放模式按钮点击事件
+    loopButton.addEventListener("click", () => setPlayMode("loop"));
+    orderButton.addEventListener("click", () => setPlayMode("order"));
+    randomButton.addEventListener("click", () => setPlayMode("random"));
 
     // 添加当前播放样式
     const style = document.createElement("style");
@@ -190,6 +254,29 @@
       
       .music-item.playing:hover {
         background-color: #45a049 !important;
+      }
+
+      .mode-btn {
+        padding: 6px 14px;
+        font-size: 14px;
+        background-color: #f0f0f0;
+        color: #333;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 8px;
+        transition: all 0.2s;
+      }
+
+      .mode-btn:hover {
+        background-color: #e0e0e0;
+      }
+
+      .mode-btn.active {
+        background-color: #4CAF50;
+        color: white;
+        border-color: #4CAF50;
+        font-weight: bold;
       }
     `;
     document.head.appendChild(style);
